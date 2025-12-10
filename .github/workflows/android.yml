@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ 6TqlrLqnzv3uIyRhsdXYnLe2fWep0IATQ6YD1SHh }}
 
     steps:
       - name: Checkout code
@@ -17,10 +19,6 @@ jobs:
         run: |
           npm install --global eas-cli
           npm install
-
-      - name: Login to Expo
-        run: |
-          eas login --token ${{ secrets.EXPO_TOKEN }}
 
       - name: Build APK
         run: |
