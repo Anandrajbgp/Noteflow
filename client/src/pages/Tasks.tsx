@@ -18,12 +18,21 @@ export default function Tasks() {
     setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   };
 
-  const handleAddTask = (newTask: { title: string; frequency: "Daily" | "Weekly" | "Monthly" }) => {
+  const handleAddTask = (newTask: { 
+    title: string; 
+    frequency: "Daily" | "Weekly" | "Monthly";
+    date?: string;
+    time?: string;
+    notificationTime?: string;
+  }) => {
     const task = {
       id: Date.now().toString(),
       title: newTask.title,
       frequency: newTask.frequency,
-      completed: false
+      completed: false,
+      date: newTask.date,
+      time: newTask.time,
+      notificationTime: newTask.notificationTime
     };
     setTasks([task, ...tasks]);
   };
