@@ -11,12 +11,14 @@ import { useTasks } from "@/hooks/useTasks";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OfflineTask } from "@/lib/offlineStorage";
 import { AnimatePresence } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Tasks() {
   const [filter, setFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editTask, setEditTask] = useState<OfflineTask | null>(null);
+  const { toast } = useToast();
 
   const {
     tasks,
@@ -69,12 +71,37 @@ export default function Tasks() {
   const filteredTasks = getFilteredTasks();
 
   const handleSaveTask = async (taskData: Partial<OfflineTask>) => {
-    if (editTask) {
-      await updateTask(editTask.id, taskData);
-    } else {
-      await createTask(taskData);
+    try {
+      if (editTask) {
+        await updateTask(editTask.id, taskData);
+        toast({ title: "Task updated", description: "Your task has been saved" });
+      } else {
+        await createTask(taskData);
+        toast({ title: "Task created", description: "Your new task has been added" });
+      }
+      setEditTask(null);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save task" });
     }
-    setEditTask(null);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await removeTask(taskId);
+      toast({ title: "Task deleted", description: "Task has been removed" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete task" });
+    }
+  };
+
+  const handleToggleComplete = async (taskId: string) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      await toggleComplete(taskId);
+      toast({ title: task?.completed ? "Task marked incomplete" : "Task completed" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to update task" });
+    }
   };
 
   const handleEditTask = (task: OfflineTask) => {
@@ -159,9 +186,9 @@ export default function Tasks() {
                 <TaskItem 
                   key={task.id} 
                   task={task}
-                  onToggle={() => toggleComplete(task.id)}
+                  onToggle={() => handleToggleComplete(task.id)}
                   onEdit={() => handleEditTask(task)}
-                  onDelete={() => removeTask(task.id)}
+                  onDelete={() => handleDeleteTask(task.id)}
                 />
               ))}
             </AnimatePresence>

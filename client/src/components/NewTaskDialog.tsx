@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -71,6 +71,9 @@ export function NewTaskDialog({ open, onOpenChange, onSave, editTask }: NewTaskD
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{editTask ? 'Edit Task' : 'New Task'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {editTask ? 'Edit your task details' : 'Create a new task with title, description, date and time'}
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">

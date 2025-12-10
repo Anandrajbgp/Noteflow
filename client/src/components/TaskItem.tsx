@@ -101,7 +101,7 @@ export function TaskItem({ task, onToggle, onEdit, onDelete }: TaskItemProps) {
           <Button 
             size="icon" 
             variant="ghost" 
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
             data-testid={`button-task-menu-${task.id}`}
           >
             <MoreVertical className="h-4 w-4" />

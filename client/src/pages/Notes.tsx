@@ -11,12 +11,14 @@ import { useNotes } from "@/hooks/useNotes";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OfflineNote } from "@/lib/offlineStorage";
 import { AnimatePresence } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Notes() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editNote, setEditNote] = useState<OfflineNote | null>(null);
   const [tab, setTab] = useState<"active" | "archived">("active");
+  const { toast } = useToast();
   
   const { 
     activeNotes, 
@@ -40,12 +42,65 @@ export default function Notes() {
   );
 
   const handleSaveNote = async (noteData: Partial<OfflineNote>) => {
-    if (editNote) {
-      await updateNote(editNote.id, noteData);
-    } else {
-      await createNote(noteData);
+    try {
+      if (editNote) {
+        await updateNote(editNote.id, noteData);
+        toast({ title: "Note updated", description: "Your note has been saved" });
+      } else {
+        await createNote(noteData);
+        toast({ title: "Note created", description: "Your new note has been saved" });
+      }
+      setEditNote(null);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save note" });
     }
-    setEditNote(null);
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await removeNote(noteId);
+      toast({ title: "Note deleted", description: "Note has been removed" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete note" });
+    }
+  };
+
+  const handleTogglePin = async (noteId: string) => {
+    try {
+      const note = notesToShow.find(n => n.id === noteId);
+      await togglePin(noteId);
+      toast({ title: note?.isPinned ? "Note unpinned" : "Note pinned" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to update note" });
+    }
+  };
+
+  const handleToggleArchive = async (noteId: string) => {
+    try {
+      const note = notesToShow.find(n => n.id === noteId);
+      await toggleArchive(noteId);
+      toast({ title: note?.isArchived ? "Note restored" : "Note archived" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to archive note" });
+    }
+  };
+
+  const handleLockNote = async (noteId: string, pin: string) => {
+    try {
+      await lockNote(noteId, pin);
+      toast({ title: "Note locked", description: "Note is now protected with PIN" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to lock note" });
+    }
+  };
+
+  const handleUnlockNote = async (noteId: string) => {
+    try {
+      await unlockNote(noteId);
+      toast({ title: "Note unlocked" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to unlock note" });
+    }
   };
 
   const handleEditNote = (note: OfflineNote) => {
@@ -117,11 +172,11 @@ export default function Notes() {
                   key={note.id} 
                   note={note}
                   onEdit={() => handleEditNote(note)}
-                  onDelete={() => removeNote(note.id)}
-                  onTogglePin={() => togglePin(note.id)}
-                  onToggleArchive={() => toggleArchive(note.id)}
-                  onLock={(pin) => lockNote(note.id, pin)}
-                  onUnlock={() => unlockNote(note.id)}
+                  onDelete={() => handleDeleteNote(note.id)}
+                  onTogglePin={() => handleTogglePin(note.id)}
+                  onToggleArchive={() => handleToggleArchive(note.id)}
+                  onLock={(pin) => handleLockNote(note.id, pin)}
+                  onUnlock={() => handleUnlockNote(note.id)}
                 />
               ))}
             </AnimatePresence>
