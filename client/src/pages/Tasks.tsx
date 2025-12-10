@@ -4,15 +4,10 @@ import { TaskItem } from "@/components/TaskItem";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { NewTaskDialog } from "@/components/NewTaskDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckSquare } from "lucide-react";
 
-const INITIAL_TASKS = [
-  { id: "1", title: "Morning Meditation", frequency: "Daily" as const, completed: true },
-  { id: "2", title: "Read 30 mins", frequency: "Daily" as const, completed: false },
-  { id: "3", title: "Weekly Review", frequency: "Weekly" as const, completed: false },
-  { id: "4", title: "Water Plants", frequency: "Weekly" as const, completed: true },
-  { id: "5", title: "Pay Rent", frequency: "Monthly" as const, completed: false },
-  { id: "6", title: "Backup Data", frequency: "Monthly" as const, completed: false },
-];
+// Empty initial state
+const INITIAL_TASKS: any[] = [];
 
 export default function Tasks() {
   const [tasks, setTasks] = useState(INITIAL_TASKS);
@@ -40,7 +35,7 @@ export default function Tasks() {
 
   return (
     <div className="pb-24 min-h-screen bg-background">
-      <Header title="Recurring" subtitle="Manage your habits & routines" />
+      <Header title="Tasks" />
 
       <main className="px-6">
         <Tabs defaultValue="all" className="w-full" onValueChange={setFilter}>
@@ -52,12 +47,16 @@ export default function Tasks() {
           </TabsList>
 
           <div className="space-y-3 mt-4">
-            {filteredTasks.map(task => (
-              <TaskItem key={task.id} task={task} onToggle={toggleTask} />
-            ))}
-            {filteredTasks.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-xl">
-                No {filter !== "all" ? filter : ""} tasks found. Add one!
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map(task => (
+                <TaskItem key={task.id} task={task} onToggle={toggleTask} />
+              ))
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 -z-0">
+                <div className="h-24 w-24 bg-[#E0F2F1] rounded-2xl flex items-center justify-center mb-4 text-[#26A69A]">
+                  <CheckSquare className="h-10 w-10" />
+                </div>
+                <p className="text-muted-foreground text-base">No tasks yet</p>
               </div>
             )}
           </div>

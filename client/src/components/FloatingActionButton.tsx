@@ -8,12 +8,12 @@ interface FABProps {
 export function FloatingActionButton({ onClick }: FABProps) {
   return (
     <motion.button
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className="fixed bottom-24 right-6 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 flex items-center justify-center z-40"
+      className="fixed bottom-24 right-6 h-14 w-14 rounded-full bg-[#FFB74D] text-white shadow-lg shadow-orange-500/20 flex items-center justify-center z-40"
     >
-      <Plus className="h-7 w-7" />
+      <Plus className="h-8 w-8" />
     </motion.button>
   );
 }

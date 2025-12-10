@@ -3,16 +3,11 @@ import { Header } from "@/components/Header";
 import { NoteCard } from "@/components/NoteCard";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { NewNoteDialog } from "@/components/NewNoteDialog";
-import { Search } from "lucide-react";
+import { Search, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-const INITIAL_NOTES = [
-  { id: "1", title: "Project Ideas", content: "App for tracking water intake with gamification elements. Need to sketch out the UI flow for the onboarding process.", date: "2h ago", color: "bg-blue-50 dark:bg-blue-950/20" },
-  { id: "2", title: "Grocery List", content: "Milk, Eggs, Bread, Avocados, Coffee beans, Oat milk, Bananas.", date: "Yesterday", color: "bg-orange-50 dark:bg-orange-950/20" },
-  { id: "3", title: "Meeting Notes", content: "Discussed Q4 roadmap. Key takeaways: Focus on mobile performance, reduce bundle size, implement dark mode.", date: "Dec 8", color: "bg-green-50 dark:bg-green-950/20" },
-  { id: "4", title: "Book Recommendations", content: "The Mom Test, atomic Habits, Deep Work, Clean Code.", date: "Dec 5", color: "bg-purple-50 dark:bg-purple-950/20" },
-  { id: "5", title: "Gift Ideas", content: "Headphones for brother, Scarf for mom, Coffee mug for dad.", date: "Nov 28" },
-];
+// Start with empty notes to match the screenshot "No notes here yet"
+const INITIAL_NOTES: any[] = [];
 
 export default function Notes() {
   const [notes, setNotes] = useState(INITIAL_NOTES);
@@ -41,31 +36,39 @@ export default function Notes() {
 
   return (
     <div className="pb-24 min-h-screen bg-background">
-      <Header title="Notes" subtitle={`${filteredNotes.length} notes found`} />
+      <Header title="Notes" />
       
-      <div className="px-6 mb-6 sticky top-[120px] z-20 bg-background/95 backdrop-blur py-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search your notes..." 
-            className="pl-9 bg-secondary border-none h-11 rounded-xl"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {notes.length > 0 && (
+        <div className="px-6 mb-6 sticky top-[88px] z-20 bg-background/95 backdrop-blur py-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search notes..." 
+              className="pl-9 bg-secondary border-none h-11 rounded-xl text-base"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      <main className="px-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredNotes.map(note => (
-          <NoteCard 
-            key={note.id} 
-            note={note} 
-            onDelete={handleDeleteNote}
-          />
-        ))}
-        {filteredNotes.length === 0 && (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            No notes found matching "{search}"
+      <main className="px-6">
+        {filteredNotes.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredNotes.map(note => (
+              <NoteCard 
+                key={note.id} 
+                note={note} 
+                onDelete={handleDeleteNote}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 -z-0">
+            <div className="h-24 w-24 bg-[#FFF8E1] rounded-2xl flex items-center justify-center mb-4 text-[#FFB74D]">
+              <FileText className="h-10 w-10" />
+            </div>
+            <p className="text-muted-foreground text-base">No notes here yet</p>
           </div>
         )}
       </main>
