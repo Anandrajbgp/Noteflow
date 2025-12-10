@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { TaskItem } from "@/components/TaskItem";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { NewTaskDialog } from "@/components/NewTaskDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const RECURRING_TASKS = [
+const INITIAL_TASKS = [
   { id: "1", title: "Morning Meditation", frequency: "Daily" as const, completed: true },
   { id: "2", title: "Read 30 mins", frequency: "Daily" as const, completed: false },
   { id: "3", title: "Weekly Review", frequency: "Weekly" as const, completed: false },
@@ -14,11 +15,22 @@ const RECURRING_TASKS = [
 ];
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState(RECURRING_TASKS);
+  const [tasks, setTasks] = useState(INITIAL_TASKS);
   const [filter, setFilter] = useState("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const toggleTask = (id: string) => {
     setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  };
+
+  const handleAddTask = (newTask: { title: string; frequency: "Daily" | "Weekly" | "Monthly" }) => {
+    const task = {
+      id: Date.now().toString(),
+      title: newTask.title,
+      frequency: newTask.frequency,
+      completed: false
+    };
+    setTasks([task, ...tasks]);
   };
 
   const filteredTasks = tasks.filter(t => {
@@ -43,11 +55,22 @@ export default function Tasks() {
             {filteredTasks.map(task => (
               <TaskItem key={task.id} task={task} onToggle={toggleTask} />
             ))}
+            {filteredTasks.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-xl">
+                No {filter !== "all" ? filter : ""} tasks found. Add one!
+              </div>
+            )}
           </div>
         </Tabs>
       </main>
 
-      <FloatingActionButton onClick={() => console.log("New Task")} />
+      <FloatingActionButton onClick={() => setIsDialogOpen(true)} />
+      
+      <NewTaskDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen}
+        onSave={handleAddTask}
+      />
     </div>
   );
 }
