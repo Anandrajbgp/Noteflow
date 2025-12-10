@@ -7,6 +7,14 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Config endpoint for Supabase credentials (public, anon key only)
+  app.get("/api/config", (_req, res) => {
+    res.json({
+      supabaseUrl: process.env.SUPABASE_URL || '',
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+    });
+  });
+
   // Notes routes
   app.get("/api/notes", async (_req, res) => {
     try {

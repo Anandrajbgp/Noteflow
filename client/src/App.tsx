@@ -3,6 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { BottomNav } from "@/components/BottomNav";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Notes from "@/pages/Notes";
 import Tasks from "@/pages/Tasks";
 import Settings from "@/pages/Settings";
@@ -23,14 +25,18 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background text-foreground font-sans">
-        {/* Mobile Container wrapper to simulate phone on desktop, full width on mobile */}
-        <div className="max-w-md mx-auto min-h-screen bg-background relative shadow-2xl overflow-hidden">
-          <Router />
-          <BottomNav />
-        </div>
-        <Toaster />
-      </div>
+      <ThemeProvider>
+        <AuthProvider>
+          <div className="min-h-screen bg-background text-foreground font-sans">
+            {/* Mobile Container wrapper to simulate phone on desktop, full width on mobile */}
+            <div className="max-w-md mx-auto min-h-screen bg-background relative shadow-2xl overflow-hidden">
+              <Router />
+              <BottomNav />
+            </div>
+            <Toaster />
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
