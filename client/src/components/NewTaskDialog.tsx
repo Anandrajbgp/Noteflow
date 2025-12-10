@@ -14,7 +14,7 @@ interface NewTaskDialogProps {
     frequency: "Daily" | "Weekly" | "Monthly";
     date?: string;
     time?: string;
-    notificationTime?: string;
+    reminderOffset?: string;
   }) => void;
 }
 
@@ -24,7 +24,7 @@ export function NewTaskDialog({ open, onOpenChange, onSave }: NewTaskDialogProps
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [enableNotification, setEnableNotification] = useState(false);
-  const [notificationTime, setNotificationTime] = useState("");
+  const [reminderOffset, setReminderOffset] = useState("15");
 
   const handleSave = () => {
     if (title.trim()) {
@@ -33,7 +33,7 @@ export function NewTaskDialog({ open, onOpenChange, onSave }: NewTaskDialogProps
         frequency,
         date: date || undefined,
         time: time || undefined,
-        notificationTime: enableNotification ? notificationTime : undefined
+        reminderOffset: enableNotification ? reminderOffset : undefined
       });
       
       // Reset form
@@ -42,7 +42,7 @@ export function NewTaskDialog({ open, onOpenChange, onSave }: NewTaskDialogProps
       setDate("");
       setTime("");
       setEnableNotification(false);
-      setNotificationTime("");
+      setReminderOffset("15");
       
       onOpenChange(false);
     }
@@ -119,13 +119,20 @@ export function NewTaskDialog({ open, onOpenChange, onSave }: NewTaskDialogProps
 
           {enableNotification && (
             <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
-               <Label htmlFor="notification-time">Notification Time</Label>
-               <Input 
-                 id="notification-time" 
-                 type="time" 
-                 value={notificationTime}
-                 onChange={(e) => setNotificationTime(e.target.value)}
-               />
+               <Label htmlFor="reminder-offset">Remind me</Label>
+               <Select value={reminderOffset} onValueChange={setReminderOffset}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">At time of event</SelectItem>
+                  <SelectItem value="5">5 minutes before</SelectItem>
+                  <SelectItem value="10">10 minutes before</SelectItem>
+                  <SelectItem value="15">15 minutes before</SelectItem>
+                  <SelectItem value="30">30 minutes before</SelectItem>
+                  <SelectItem value="60">1 hour before</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>

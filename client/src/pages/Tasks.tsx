@@ -23,7 +23,7 @@ export default function Tasks() {
     frequency: "Daily" | "Weekly" | "Monthly";
     date?: string;
     time?: string;
-    notificationTime?: string;
+    reminderOffset?: string;
   }) => {
     const task = {
       id: Date.now().toString(),
@@ -32,7 +32,7 @@ export default function Tasks() {
       completed: false,
       date: newTask.date,
       time: newTask.time,
-      notificationTime: newTask.notificationTime
+      reminderOffset: newTask.reminderOffset
     };
     setTasks([task, ...tasks]);
   };

@@ -9,7 +9,7 @@ interface Task {
   completed: boolean;
   date?: string;
   time?: string;
-  notificationTime?: string;
+  reminderOffset?: string;
 }
 
 interface TaskItemProps {
@@ -63,11 +63,11 @@ export function TaskItem({ task, onToggle }: TaskItemProps) {
             </div>
           )}
 
-          {task.notificationTime && (
+          {task.reminderOffset && (
             <div className="flex items-center gap-1.5 text-orange-500">
               <Bell className="h-3 w-3" />
               <span className="text-xs font-medium">
-                {task.notificationTime}
+                {task.reminderOffset === "0" ? "At time of event" : `${task.reminderOffset} min before`}
               </span>
             </div>
           )}
