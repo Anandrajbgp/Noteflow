@@ -56,13 +56,26 @@ export async function signInWithGoogle() {
   const client = getSupabase();
   if (!client) throw new Error('Supabase not configured');
   
+  // Check if running in Capacitor (native app)
+  const isNative = window.location.protocol === 'capacitor:';
+  
   const { data, error } = await client.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: isNative 
+        ? 'com.noteflow.app://callback'  // Deep link for native app
+        : window.location.origin,
+      skipBrowserRedirect: isNative,  // Don't auto-redirect in native
     },
   });
   if (error) throw error;
+  
+  // For native apps, manually open browser
+  if (isNative && data.url) {
+    const { Browser } = await import('@capacitor/browser');
+    await Browser.open({ url: data.url });
+  }
+  
   return data;
 }
 

@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Initialize Supabase config from server
-    initSupabase().then(() => {
+    initSupabase().then(async () => {
       setConfigured(isSupabaseConfigured());
       
       if (!isSupabaseConfigured()) {
@@ -42,6 +42,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setLoading(false);
       });
+
+      // Handle deep links for OAuth callback (native apps)
+      if (window.location.protocol === 'capacitor:') {
+        const { App } = await import('@capacitor/app');
+        App.addListener('appUrlOpen', async (data) => {
+          if (data.url.startsWith('com.noteflow.app://callback')) {
+            // Extract the URL fragment and handle OAuth
+            const url = new URL(data.url.replace('com.noteflow.app://callback', 'https://temp.com'));
+            const params = new URLSearchParams(url.hash.slice(1));
+            
+            if (params.has('access_token')) {
+              // Supabase will automatically handle this through onAuthStateChange
+              window.location.href = '/settings';
+            }
+          }
+        });
+      }
 
       return () => subscription.unsubscribe();
     });
