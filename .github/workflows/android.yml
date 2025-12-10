@@ -1,0 +1,33 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          npm install --global eas-cli
+          npm install
+
+      - name: Login to Expo
+        run: |
+          eas login --token ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build APK
+        run: |
+          eas build --platform android --profile preview --local
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-apk
+          path: ./*.apk
