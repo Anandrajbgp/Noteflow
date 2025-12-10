@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      EXPO_TOKEN: ${{ 6TqlrLqnzv3uIyRhsdXYnLe2fWep0IATQ6YD1SHh }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
     steps:
       - name: Checkout code
