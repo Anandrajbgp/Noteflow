@@ -5,14 +5,47 @@ import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { NewNoteDialog } from "@/components/NewNoteDialog";
 import { Search, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-// Start with empty notes to match the screenshot "No notes here yet"
-const INITIAL_NOTES: any[] = [];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Note } from "@shared/schema";
 
 export default function Notes() {
-  const [notes, setNotes] = useState(INITIAL_NOTES);
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  
+  const { data: notes = [] } = useQuery<Note[]>({
+    queryKey: ["/api/notes"],
+    queryFn: async () => {
+      const response = await fetch("/api/notes");
+      if (!response.ok) throw new Error("Failed to fetch notes");
+      return response.json();
+    },
+  });
+
+  const createNoteMutation = useMutation({
+    mutationFn: async (note: { title: string; content: string }) => {
+      const response = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...note, color: "bg-background" }),
+      });
+      if (!response.ok) throw new Error("Failed to create note");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+    },
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Failed to delete note");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+    },
+  });
   
   const filteredNotes = notes.filter(note => 
     note.title.toLowerCase().includes(search.toLowerCase()) || 
@@ -20,18 +53,11 @@ export default function Notes() {
   );
 
   const handleAddNote = (newNote: { title: string; content: string }) => {
-    const note = {
-      id: Date.now().toString(),
-      title: newNote.title,
-      content: newNote.content,
-      date: "Just now",
-      color: "bg-background" // Default color
-    };
-    setNotes([note, ...notes]);
+    createNoteMutation.mutate(newNote);
   };
 
-  const handleDeleteNote = (id: string) => {
-    setNotes(notes.filter(n => n.id !== id));
+  const handleDeleteNote = (id: number) => {
+    deleteNoteMutation.mutate(id);
   };
 
   return (
@@ -58,8 +84,14 @@ export default function Notes() {
             {filteredNotes.map(note => (
               <NoteCard 
                 key={note.id} 
-                note={note} 
-                onDelete={handleDeleteNote}
+                note={{
+                  id: note.id.toString(),
+                  title: note.title,
+                  content: note.content,
+                  date: new Date(note.createdAt).toLocaleDateString(),
+                  color: note.color || "bg-background"
+                }} 
+                onDelete={() => handleDeleteNote(note.id)}
               />
             ))}
           </div>

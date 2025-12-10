@@ -3,19 +3,63 @@ import { Header } from "@/components/Header";
 import { TaskItem } from "@/components/TaskItem";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { NewTaskDialog } from "@/components/NewTaskDialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckSquare } from "lucide-react";
-
-// Empty initial state
-const INITIAL_TASKS: any[] = [];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Task } from "@shared/schema";
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
   const [filter, setFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  const { data: tasks = [] } = useQuery<Task[]>({
+    queryKey: ["/api/tasks"],
+    queryFn: async () => {
+      const response = await fetch("/api/tasks");
+      if (!response.ok) throw new Error("Failed to fetch tasks");
+      return response.json();
+    },
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (task: { 
+      title: string; 
+      frequency: string;
+      date?: string;
+      time?: string;
+      reminderOffset?: string;
+    }) => {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...task, completed: false }),
+      });
+      if (!response.ok) throw new Error("Failed to create task");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    },
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed }),
+      });
+      if (!response.ok) throw new Error("Failed to update task");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    },
+  });
+
+  const toggleTask = (id: number, completed: boolean) => {
+    updateTaskMutation.mutate({ id, completed: !completed });
   };
 
   const handleAddTask = (newTask: { 
@@ -25,16 +69,7 @@ export default function Tasks() {
     time?: string;
     reminderOffset?: string;
   }) => {
-    const task = {
-      id: Date.now().toString(),
-      title: newTask.title,
-      frequency: newTask.frequency,
-      completed: false,
-      date: newTask.date,
-      time: newTask.time,
-      reminderOffset: newTask.reminderOffset
-    };
-    setTasks([task, ...tasks]);
+    createTaskMutation.mutate(newTask);
   };
 
   const filteredTasks = tasks.filter(t => {
@@ -58,7 +93,19 @@ export default function Tasks() {
           <div className="space-y-3 mt-4">
             {filteredTasks.length > 0 ? (
               filteredTasks.map(task => (
-                <TaskItem key={task.id} task={task} onToggle={toggleTask} />
+                <TaskItem 
+                  key={task.id} 
+                  task={{
+                    id: task.id.toString(),
+                    title: task.title,
+                    frequency: task.frequency as "Daily" | "Weekly" | "Monthly",
+                    completed: task.completed,
+                    date: task.date || undefined,
+                    time: task.time || undefined,
+                    reminderOffset: task.reminderOffset || undefined,
+                  }} 
+                  onToggle={() => toggleTask(task.id, task.completed)} 
+                />
               ))
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 -z-0">
