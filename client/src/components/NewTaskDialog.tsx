@@ -68,7 +68,7 @@ export function NewTaskDialog({ open, onOpenChange, onSave, editTask }: NewTaskD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editTask ? 'Edit Task' : 'New Task'}</DialogTitle>
           <DialogDescription className="sr-only">
@@ -106,7 +106,7 @@ export function NewTaskDialog({ open, onOpenChange, onSave, editTask }: NewTaskD
                 <SelectTrigger data-testid="select-frequency">
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="z-[200]">
                   <SelectItem value="once">Once</SelectItem>
                   <SelectItem value="daily">Daily</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
@@ -162,7 +162,7 @@ export function NewTaskDialog({ open, onOpenChange, onSave, editTask }: NewTaskD
                 <SelectTrigger data-testid="select-reminder-offset">
                   <SelectValue placeholder="Select time" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="z-[200]">
                   <SelectItem value="0">At time of event</SelectItem>
                   <SelectItem value="5">5 minutes before</SelectItem>
                   <SelectItem value="10">10 minutes before</SelectItem>
@@ -174,11 +174,11 @@ export function NewTaskDialog({ open, onOpenChange, onSave, editTask }: NewTaskD
             </div>
           )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={handleSave} data-testid="button-save-task">
+          <Button onClick={handleSave} data-testid="button-save-task" className="w-full sm:w-auto">
             {editTask ? 'Update' : 'Add'} Task
           </Button>
         </DialogFooter>
