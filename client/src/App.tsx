@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import Notes from "@/pages/Notes";
 import Tasks from "@/pages/Tasks";
 import Settings from "@/pages/Settings";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import HelpFeedback from "@/pages/HelpFeedback";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -17,6 +19,8 @@ function Router() {
       <Route path="/notes" component={Notes} />
       <Route path="/tasks" component={Tasks} />
       <Route path="/settings" component={Settings} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/help-feedback" component={HelpFeedback} />
       <Route component={NotFound} />
     </Switch>
   );
