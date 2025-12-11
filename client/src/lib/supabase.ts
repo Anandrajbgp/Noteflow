@@ -6,10 +6,24 @@ let _config: { supabaseUrl: string; supabaseAnonKey: string } | null = null;
 let _configLoaded = false;
 let _configPromise: Promise<void> | null = null;
 
-// Fetch config from server
+// Fetch config - uses build-time env vars for native apps, server for web
 async function loadConfig() {
   if (_configLoaded) return;
   
+  // Check for build-time environment variables first (for native app builds)
+  const buildTimeUrl = import.meta.env.VITE_SUPABASE_URL;
+  const buildTimeKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  if (buildTimeUrl && buildTimeKey) {
+    _config = {
+      supabaseUrl: buildTimeUrl,
+      supabaseAnonKey: buildTimeKey,
+    };
+    _configLoaded = true;
+    return;
+  }
+  
+  // Fall back to fetching from server (for web development)
   try {
     const response = await fetch('/api/config');
     if (response.ok) {
