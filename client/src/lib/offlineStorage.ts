@@ -51,6 +51,7 @@ export interface OfflineTask {
   time?: string;
   frequency: 'once' | 'daily' | 'weekly' | 'monthly';
   completed: boolean;
+  starred: boolean;
   reminderEnabled: boolean;
   reminderOffset?: string;
   createdAt: string;

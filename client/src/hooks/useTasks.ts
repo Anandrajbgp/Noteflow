@@ -91,6 +91,7 @@ export function useTasks() {
               time: cloudTask.time,
               frequency: cloudTask.frequency,
               completed: cloudTask.completed,
+              starred: cloudTask.starred || false,
               reminderEnabled: cloudTask.reminder_enabled,
               reminderOffset: cloudTask.reminder_offset,
               createdAt: cloudTask.created_at,
@@ -145,6 +146,7 @@ export function useTasks() {
       time: taskData.time,
       frequency: taskData.frequency || 'once',
       completed: false,
+      starred: false,
       reminderEnabled: taskData.reminderEnabled || false,
       reminderOffset: taskData.reminderOffset,
       createdAt: now,
@@ -205,6 +207,13 @@ export function useTasks() {
     }
   };
 
+  const toggleStar = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      await updateTask(taskId, { starred: !task.starred });
+    }
+  };
+
   // Filter tasks
   const today = new Date().toISOString().split('T')[0];
   
@@ -236,6 +245,7 @@ export function useTasks() {
     updateTask,
     removeTask,
     toggleComplete,
+    toggleStar,
     syncWithCloud,
     refresh: loadTasks,
     sortByDate,
