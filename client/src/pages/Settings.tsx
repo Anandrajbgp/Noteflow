@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
-import { Moon, Sun, Monitor, Bell, Shield, HelpCircle, ChevronRight, LogOut, User, Cloud, CloudOff } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Moon, Sun, Monitor, Shield, HelpCircle, ChevronRight, LogOut, User, Cloud, CloudOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -112,22 +111,6 @@ export default function Settings() {
                   <span>{label}</span>
                 </button>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Preferences */}
-        <section>
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 pl-2">Preferences</h3>
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
-                  <Bell className="h-4 w-4" />
-                </div>
-                <span className="font-medium">Notifications</span>
-              </div>
-              <Switch defaultChecked data-testid="switch-notifications-setting" />
             </div>
           </div>
         </section>
