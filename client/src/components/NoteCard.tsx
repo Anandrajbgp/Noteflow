@@ -140,17 +140,33 @@ export function NoteCard({
             <h3 className="font-semibold text-foreground line-clamp-1 flex-1">
               {note.title || 'Untitled'}
             </h3>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                  data-testid={`button-note-menu-${note.id}`}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
+            <div className="flex items-center gap-1">
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className={cn(
+                  "h-8 w-8 transition-opacity",
+                  note.isPinned ? "text-primary" : "sm:opacity-0 sm:group-hover:opacity-100"
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTogglePin();
+                }}
+                data-testid={`button-pin-${note.id}`}
+              >
+                {note.isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                    data-testid={`button-note-menu-${note.id}`}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
               <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                 {!note.isLocked && (
                   <DropdownMenuItem onClick={onEdit} data-testid="menu-edit-note">
@@ -201,7 +217,8 @@ export function NoteCard({
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </div>
           </div>
 
           {!note.isLocked && (
