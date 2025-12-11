@@ -1,31 +1,16 @@
 import { Header } from "@/components/Header";
-import { Moon, Sun, Monitor, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, User, Cloud, CloudOff, Wifi, WifiOff } from "lucide-react";
+import { Moon, Sun, Monitor, Bell, Shield, HelpCircle, ChevronRight, LogOut, User, Cloud, CloudOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
 import { Link } from "wouter";
 
 export default function Settings() {
   const { user, loading, isConfigured, signIn, logOut } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   const themeOptions = [
     { value: 'light', label: 'Light', icon: Sun },
@@ -38,24 +23,6 @@ export default function Settings() {
       <Header title="Settings" />
 
       <main className="px-6 space-y-8">
-        {/* Connection Status */}
-        <div className={cn(
-          "flex items-center gap-3 p-3 rounded-xl",
-          isOnline ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-orange-500/10 text-orange-600 dark:text-orange-400"
-        )}>
-          {isOnline ? (
-            <>
-              <Wifi className="h-4 w-4" />
-              <span className="text-sm font-medium">Online - Data will sync automatically</span>
-            </>
-          ) : (
-            <>
-              <WifiOff className="h-4 w-4" />
-              <span className="text-sm font-medium">Offline - Changes saved locally</span>
-            </>
-          )}
-        </div>
-
         {/* User Profile */}
         <section>
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 pl-2">Account</h3>
