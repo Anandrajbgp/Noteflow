@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { TaskItem } from "@/components/TaskItem";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { NewTaskDialog } from "@/components/NewTaskDialog";
-import { ArrowUpDown, MoreVertical, Plus, RefreshCw, Pencil, Trash2, CheckCircle } from "lucide-react";
+import { ArrowUpDown, MoreVertical, Plus, RefreshCw, Pencil, Trash2, CheckCircle, Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useTasks } from "@/hooks/useTasks";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OfflineTask } from "@/lib/offlineStorage";
 import { AnimatePresence } from "framer-motion";
@@ -59,6 +60,14 @@ export default function Tasks() {
     sortByName,
     refresh: refreshTasks,
   } = useTasks();
+
+  const { permissionStatus, requestPermission } = useNotifications(tasks);
+
+  useEffect(() => {
+    if (permissionStatus === 'default') {
+      requestPermission();
+    }
+  }, [permissionStatus, requestPermission]);
 
   const { data: taskLists = [], isLoading: listsLoading } = useQuery<TaskList[]>({
     queryKey: ['/api/task-lists'],
@@ -264,16 +273,40 @@ export default function Tasks() {
               New list
             </button>
             
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              onClick={syncWithCloud}
-              disabled={syncing}
-              className="ml-auto flex-shrink-0"
-              data-testid="button-sync-tasks"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-            </Button>
+            <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+              {permissionStatus !== 'granted' && permissionStatus !== 'unsupported' && (
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={requestPermission}
+                  className="text-muted-foreground"
+                  data-testid="button-enable-notifications"
+                  title="Enable notifications"
+                >
+                  <BellOff className="h-4 w-4" />
+                </Button>
+              )}
+              {permissionStatus === 'granted' && (
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="text-primary"
+                  data-testid="button-notifications-enabled"
+                  title="Notifications enabled"
+                >
+                  <Bell className="h-4 w-4" />
+                </Button>
+              )}
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                onClick={syncWithCloud}
+                disabled={syncing}
+                data-testid="button-sync-tasks"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
