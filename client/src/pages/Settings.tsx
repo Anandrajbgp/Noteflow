@@ -127,22 +127,22 @@ export default function Settings() {
         {/* Theme */}
         <section>
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 pl-2">Theme</h3>
-          <div className="bg-card border border-border rounded-2xl overflow-hidden p-4">
-            <div className="grid grid-cols-3 gap-2">
+          <div className="bg-card border border-border rounded-2xl overflow-hidden p-3">
+            <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-1">
               {themeOptions.map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
                   onClick={() => setTheme(value)}
                   className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
+                    "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md transition-all text-sm font-medium",
                     theme === value 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-secondary hover:bg-secondary/80"
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                   data-testid={`button-theme-${value}`}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-sm font-medium">{label}</span>
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
