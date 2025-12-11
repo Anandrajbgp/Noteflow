@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { TaskItem } from "@/components/TaskItem";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { NewTaskDialog } from "@/components/NewTaskDialog";
-import { ArrowUpDown, MoreVertical, Plus, RefreshCw } from "lucide-react";
+import { ArrowUpDown, MoreVertical, Plus, RefreshCw, Pencil, Trash2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useTasks } from "@/hooks/useTasks";
@@ -12,26 +12,41 @@ import type { OfflineTask } from "@/lib/offlineStorage";
 import { AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import type { TaskList } from "@shared/schema";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-type ListType = "today" | "other" | "completed";
+type SortType = "order" | "date" | "name";
 
 export default function Tasks() {
-  const [activeList, setActiveList] = useState<ListType>("today");
-  const [sortBy, setSortBy] = useState<"date" | "name">("date");
+  const [activeListId, setActiveListId] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<SortType>("order");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editTask, setEditTask] = useState<OfflineTask | null>(null);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [isNewListDialogOpen, setIsNewListDialogOpen] = useState(false);
+  const [newListName, setNewListName] = useState("");
   const { toast } = useToast();
 
   const {
     tasks,
-    todayTasks,
-    completedTasks,
     loading,
     syncing,
     createTask,
@@ -42,37 +57,83 @@ export default function Tasks() {
     syncWithCloud,
     sortByDate,
     sortByName,
+    refresh: refreshTasks,
   } = useTasks();
 
-  const otherTasks = tasks.filter(t => !t.completed && !todayTasks.includes(t));
+  const { data: taskLists = [], isLoading: listsLoading } = useQuery<TaskList[]>({
+    queryKey: ['/api/task-lists'],
+  });
+
+  const createListMutation = useMutation({
+    mutationFn: async (name: string) => {
+      return apiRequest('POST', '/api/task-lists', { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/task-lists'] });
+      toast({ title: "List created" });
+    },
+  });
+
+  const renameListMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: number; name: string }) => {
+      return apiRequest('PATCH', `/api/task-lists/${id}`, { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/task-lists'] });
+      toast({ title: "List renamed" });
+    },
+  });
+
+  const deleteListMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/task-lists/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/task-lists'] });
+      setActiveListId(null);
+      toast({ title: "List deleted" });
+    },
+  });
+
+  const deleteCompletedMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/task-lists/${id}/completed`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/task-lists'] });
+      refreshTasks();
+      toast({ title: "Completed tasks deleted" });
+    },
+  });
+
+  const activeList = taskLists.find(l => l.id === activeListId);
 
   const getFilteredTasks = () => {
     let filtered: OfflineTask[];
     
-    switch (activeList) {
-      case "today":
-        filtered = todayTasks;
-        break;
-      case "completed":
-        filtered = completedTasks;
-        break;
-      case "other":
-      default:
-        filtered = otherTasks;
+    if (activeListId === null) {
+      const today = new Date().toISOString().split('T')[0];
+      filtered = tasks.filter(t => t.date === today && !t.completed);
+    } else {
+      filtered = tasks.filter(t => t.listId === activeListId);
     }
 
-    return sortBy === "date" ? sortByDate(filtered) : sortByName(filtered);
+    switch (sortBy) {
+      case "date":
+        return sortByDate(filtered);
+      case "name":
+        return sortByName(filtered);
+      case "order":
+      default:
+        return filtered;
+    }
   };
 
   const filteredTasks = getFilteredTasks();
 
   const getListTitle = () => {
-    switch (activeList) {
-      case "today": return "Today Tasks";
-      case "completed": return "Completed";
-      case "other": return "Other Work";
-      default: return "Tasks";
-    }
+    if (activeListId === null) return "Today Task";
+    return activeList?.name || "Tasks";
   };
 
   const handleSaveTask = async (taskData: Partial<OfflineTask>) => {
@@ -81,7 +142,7 @@ export default function Tasks() {
         await updateTask(editTask.id, taskData);
         toast({ title: "Task updated", description: "Your task has been saved" });
       } else {
-        await createTask(taskData);
+        await createTask({ ...taskData, listId: activeListId || undefined });
         toast({ title: "Task created", description: "Your new task has been added" });
       }
       setEditTask(null);
@@ -127,11 +188,38 @@ export default function Tasks() {
     setIsDialogOpen(true);
   };
 
-  const lists: { id: ListType; label: string; count?: number }[] = [
-    { id: "today", label: "Today Task", count: todayTasks.length },
-    { id: "other", label: "Other Work", count: otherTasks.length },
-    { id: "completed", label: "Completed", count: completedTasks.length },
-  ];
+  const handleCreateList = () => {
+    if (newListName.trim()) {
+      createListMutation.mutate(newListName.trim());
+      setNewListName("");
+      setIsNewListDialogOpen(false);
+    }
+  };
+
+  const handleRenameList = () => {
+    if (activeListId && renameValue.trim()) {
+      renameListMutation.mutate({ id: activeListId, name: renameValue.trim() });
+      setRenameValue("");
+      setIsRenameDialogOpen(false);
+    }
+  };
+
+  const handleDeleteList = () => {
+    if (activeListId) {
+      deleteListMutation.mutate(activeListId);
+    }
+  };
+
+  const handleDeleteCompleted = () => {
+    if (activeListId) {
+      deleteCompletedMutation.mutate(activeListId);
+    }
+  };
+
+  const openRenameDialog = () => {
+    setRenameValue(activeList?.name || "");
+    setIsRenameDialogOpen(true);
+  };
 
   return (
     <div className="pb-24 min-h-screen bg-background">
@@ -140,37 +228,42 @@ export default function Tasks() {
       <main className="px-4">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex items-center gap-2 pb-3">
-            {lists.map((list) => (
+            <button
+              onClick={() => setActiveListId(null)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                activeListId === null
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary"
+              }`}
+              data-testid="tab-today"
+            >
+              Today Task
+            </button>
+            
+            {taskLists.map((list) => (
               <button
                 key={list.id}
-                onClick={() => setActiveList(list.id)}
+                onClick={() => setActiveListId(list.id)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeList === list.id
+                  activeListId === list.id
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-secondary"
                 }`}
-                data-testid={`tab-${list.id}`}
+                data-testid={`tab-list-${list.id}`}
               >
-                {list.label}
-                {list.count !== undefined && list.count > 0 && (
-                  <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
-                    activeList === list.id
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}>
-                    {list.count}
-                  </span>
-                )}
+                {list.name}
               </button>
             ))}
+            
             <button
-              onClick={handleOpenNewTask}
+              onClick={() => setIsNewListDialogOpen(true)}
               className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium text-primary hover:bg-secondary transition-colors whitespace-nowrap"
               data-testid="button-new-list"
             >
               <Plus className="h-4 w-4" />
               New list
             </button>
+            
             <Button 
               size="icon" 
               variant="ghost" 
@@ -189,34 +282,63 @@ export default function Tasks() {
           <CardHeader className="flex flex-row items-center justify-between gap-2 py-4 px-4">
             <h2 className="text-lg font-semibold">{getListTitle()}</h2>
             <div className="flex items-center gap-1">
-              <Button 
-                size="icon" 
-                variant="ghost"
-                onClick={() => setSortBy(sortBy === "date" ? "name" : "date")}
-                data-testid="button-sort-tasks"
-              >
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost" data-testid="button-list-menu">
-                    <MoreVertical className="h-4 w-4" />
+                  <Button size="icon" variant="ghost" data-testid="button-sort-tasks">
+                    <ArrowUpDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSortBy("date")}>
-                    Sort by Date
+                  <DropdownMenuItem 
+                    onClick={() => setSortBy("order")}
+                    data-testid="menu-sort-order"
+                  >
+                    My order
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("name")}>
-                    Sort by Name
+                  <DropdownMenuItem 
+                    onClick={() => setSortBy("date")}
+                    data-testid="menu-sort-date"
+                  >
+                    Date
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setSortBy("name")}
+                    data-testid="menu-sort-name"
+                  >
+                    Name
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              
+              {activeListId !== null && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="icon" variant="ghost" data-testid="button-list-menu">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={openRenameDialog} data-testid="menu-rename-list">
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Rename list
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDeleteList} data-testid="menu-delete-list">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete list
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleDeleteCompleted} data-testid="menu-delete-completed">
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Delete completed tasks
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </CardHeader>
           <CardContent className="px-0 py-0">
             <div className="divide-y divide-border">
-              {loading ? (
+              {loading || listsLoading ? (
                 <>
                   {[1, 2, 3].map(i => (
                     <div key={i} className="px-4 py-3">
@@ -240,9 +362,7 @@ export default function Tasks() {
               ) : (
                 <div className="flex flex-col items-center justify-center text-center p-8">
                   <p className="text-muted-foreground text-sm">
-                    {activeList === "completed" ? "No completed tasks" : 
-                     activeList === "today" ? "No tasks for today" :
-                     "No tasks yet"}
+                    {activeListId === null ? "No tasks for today" : "No tasks in this list"}
                   </p>
                 </div>
               )}
@@ -259,6 +379,60 @@ export default function Tasks() {
         onSave={handleSaveTask}
         editTask={editTask}
       />
+
+      <Dialog open={isNewListDialogOpen} onOpenChange={setIsNewListDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New List</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="new-list-name">List name</Label>
+            <Input
+              id="new-list-name"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              placeholder="Enter list name"
+              className="mt-2"
+              data-testid="input-new-list-name"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewListDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateList} disabled={!newListName.trim()} data-testid="button-create-list">
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename List</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="rename-list">List name</Label>
+            <Input
+              id="rename-list"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              placeholder="Enter new name"
+              className="mt-2"
+              data-testid="input-rename-list"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRenameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRenameList} disabled={!renameValue.trim()} data-testid="button-rename-list">
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

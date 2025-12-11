@@ -54,6 +54,8 @@ export interface OfflineTask {
   starred: boolean;
   reminderEnabled: boolean;
   reminderOffset?: string;
+  listId?: number;
+  listOrder?: number;
   createdAt: string;
   updatedAt: string;
   syncedAt?: string;

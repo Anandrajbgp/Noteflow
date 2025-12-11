@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertNoteSchema, insertTaskSchema } from "@shared/schema";
+import { insertNoteSchema, insertTaskSchema, insertTaskListSchema, updateTaskListSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -42,6 +42,57 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete note" });
+    }
+  });
+
+  // Task Lists routes
+  app.get("/api/task-lists", async (_req, res) => {
+    try {
+      const lists = await storage.getTaskLists();
+      res.json(lists);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch task lists" });
+    }
+  });
+
+  app.post("/api/task-lists", async (req, res) => {
+    try {
+      const validated = insertTaskListSchema.parse(req.body);
+      const list = await storage.createTaskList(validated);
+      res.status(201).json(list);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid task list data" });
+    }
+  });
+
+  app.patch("/api/task-lists/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validated = updateTaskListSchema.parse(req.body);
+      const list = await storage.updateTaskList(id, validated);
+      res.json(list);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid update data" });
+    }
+  });
+
+  app.delete("/api/task-lists/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteTaskList(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete task list" });
+    }
+  });
+
+  app.delete("/api/task-lists/:id/completed", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCompletedTasksByList(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete completed tasks" });
     }
   });
 

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, boolean, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -34,6 +34,23 @@ export const insertNoteSchema = createInsertSchema(notes).omit({
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Note = typeof notes.$inferSelect;
 
+// Task Lists table
+export const taskLists = pgTable("task_lists", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  sortOrder: serial("sort_order"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTaskListSchema = createInsertSchema(taskLists).omit({
+  id: true,
+  sortOrder: true,
+  createdAt: true,
+});
+
+export type InsertTaskList = z.infer<typeof insertTaskListSchema>;
+export type TaskList = typeof taskLists.$inferSelect;
+
 // Tasks table
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -43,11 +60,18 @@ export const tasks = pgTable("tasks", {
   date: text("date"),
   time: text("time"),
   reminderOffset: text("reminder_offset"),
+  listId: integer("list_id"),
+  listOrder: integer("list_order").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const updateTaskListSchema = createInsertSchema(taskLists).pick({
+  name: true,
 });
 
 export const insertTaskSchema = createInsertSchema(tasks).omit({
   id: true,
+  listOrder: true,
   createdAt: true,
 });
 

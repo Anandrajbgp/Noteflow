@@ -149,6 +149,8 @@ export function useTasks() {
       starred: false,
       reminderEnabled: taskData.reminderEnabled || false,
       reminderOffset: taskData.reminderOffset,
+      listId: taskData.listId,
+      listOrder: taskData.listOrder,
       createdAt: now,
       updatedAt: now,
       pendingSync: !!user && isSupabaseConfigured(),
