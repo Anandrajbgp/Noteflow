@@ -6,6 +6,11 @@ workflows:
     environment:
       node: 20
       java: 17
+      groups:
+        - supabase_credentials
+      vars:
+        VITE_SUPABASE_URL: https://ynahfciaixjjgzbbmjuf.supabase.co
+        VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluYWhmY2lhaXhqamd6YmJtanVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNjg1NTMsImV4cCI6MjA4MDY0NDU1M30.ORS6iroFT-A2TuMU9TZyCMuuSZBieTDKeivIjlixjMI
     scripts:
       - name: Install dependencies
         script: |
